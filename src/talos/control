@@ -1,0 +1,27 @@
+Source: talos
+Maintainer: Conner Crosby <cavcrosby@gmail.com>
+Section: misc
+Build-Depends: debhelper-compat (= 14),
+               golang
+Standards-Version: 4.7.4.1
+Homepage: https://github.com/siderolabs/talos.git
+
+Package: talosctl
+Architecture: any
+Section: utils
+Description: modern OS for Kubernetes
+ Talos is a modern OS for running Kubernetes: secure, immutable, and minimal.
+ Talos is fully open source, production-ready, and supported by the people at
+ Sidero Labs. All system management is done via an API - there is no shell or
+ interactive console. Benefits include:
+ .
+  * Security: Talos reduces your attack surface: It's minimal, hardened, and
+    immutable. All API access is secured with mutual TLS (mTLS) authentication.
+  * Predictability: Talos eliminates configuration drift, reduces unknown
+    factors by employing immutable infrastructure ideology, and delivers atomic
+    updates.
+  * Evolvability: Talos simplifies your architecture, increases your agility,
+    and always delivers current stable Kubernetes and Linux versions.
+ .
+ This package provides the CLI for out-of-band management of Kubernetes nodes
+ created by Talos.

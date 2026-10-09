@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Builds the packages of the named source.
+
+set -eo pipefail
+
+. "./scripts/util.bash"
+
+# constants
+export CACHE_DIR_PATH="./.cache/talos"
+
+declare -a patch_versions
+if [ "${VERSION}" ]; then
+    patch_versions+=("${VERSION}")
+else
+    tags="$(\
+        git ls-remote \
+            --refs \
+            --tags \
+            "https://github.com/siderolabs/talos.git" \
+            "v[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*" \
+            | awk '{ sub("refs/tags/", "", $2); print $2 }' \
+            | grep \
+                --invert-match \
+                --extended-regexp \
+                "^pkg/machinery/|v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-\w+" \
+    )"
+
+    latest_minor_version="$(
+        printf \
+            "%s\n" \
+            "${tags}" \
+            | sed \
+                --regexp-extended \
+                's/^v//; s/\.[[:digit:]]+$//' \
+            | sort --version-sort \
+            | uniq \
+            | tail --lines 1 \
+    )"
+
+    for tag in ${tags}; do
+        if is_ge_version "${tag#v}" "${latest_minor_version}"; then
+            patch_versions+=("${tag}")
+        fi
+    done
+fi
+
+checkout \
+    "talos" \
+    "${patch_versions[0]}" \
+    "https://github.com/siderolabs/talos.git" \
+    "${CACHE_DIR_PATH}"
+
+create_container "talos" "${CACHE_DIR_PATH}"
+setup
+exec_container \
+    "apt-get" \
+    "install" \
+    "--assume-yes" \
+    "--no-install-recommends" \
+    "git"
+
+for patch_version in "${patch_versions[@]}"; do
+    destdir="$(\
+        checkout \
+        "talos" \
+        "${patch_version}" \
+        "https://github.com/siderolabs/talos.git" \
+        "${CACHE_DIR_PATH}" \
+    )"
+
+    exec_build_pkgs_container "${patch_version}" "${CACHE_DIR_PATH}"
+done
+
+remove_container
+
+exit 0

@@ -1,0 +1,18 @@
+Source: yq
+Maintainer: Conner Crosby <cavcrosby@gmail.com>
+Section: utils
+Build-Depends: debhelper-compat (= 14),
+               golang,
+               pandoc,
+               tzdata
+Standards-Version: 4.7.4.1
+Homepage: https://github.com/mikefarah/yq.git
+
+Package: yq-go
+Architecture: any
+Depends: tzdata
+Description: lightweight and portable command-line file processor
+ yq is a lightweight and portable command-line file processor. yq uses jq like
+ syntax but works with YAML files as well as JSON, XML, INI, properties, CSV
+ and TSV. It doesn't yet support everything jq does - but it does support the
+ most common operations and functions, and more is being added continuously.

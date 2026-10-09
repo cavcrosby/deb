@@ -1,0 +1,3 @@
+talosctl binary: no-copyright-file
+talosctl binary: statically-linked-binary
+talosctl binary: initial-upload-closes-no-bugs

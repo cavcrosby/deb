@@ -1,0 +1,87 @@
+#!/usr/bin/make -f
+
+NAME = $(shell grep "^NAME =" "./Makefile" | sed "s/^NAME = //")
+SHA = $(shell git describe --always --match "none" --abbrev=8)
+USERNAME = $(shell grep "^USERNAME ?=" "./Makefile" | sed "s/^USERNAME ?= //")
+REGISTRY = $(shell grep "^REGISTRY ?=" "./Makefile" | sed "s/^REGISTRY ?= //")
+FACTORY = $(shell grep "^FACTORY ?=" "./Makefile" | sed "s/^FACTORY ?= //")
+PKGS = $(shell grep "^PKGS ?=" "./Makefile" | sed "s/^PKGS ?= //")
+TOOLS = $(shell grep "^TOOLS ?=" "./Makefile" | sed "s/^TOOLS ?= //")
+TAG = $(shell git describe --tag --always --match "v[0-9]*")
+ARTIFACTS = $(shell grep "^ARTIFACTS :=" "./Makefile" | sed "s/^ARTIFACTS := //")
+GOAMD64 = $(shell grep "^GOAMD64 ?=" "./Makefile" | sed "s/^GOAMD64 ?= //")
+GO_BUILDTAGS_TALOSCTL = $(shell grep "^GO_BUILDTAGS_TALOSCTL ?=" "./Makefile" | sed "s/^GO_BUILDTAGS_TALOSCTL ?= //")
+export GOTOOLCHAIN = $(shell grep "^ENV GOTOOLCHAIN=" "./Dockerfile" | sed "s/^ENV GOTOOLCHAIN=//")
+export GOPATH = ${CURDIR}/.cache/go
+export GOCACHE = ${GOPATH}/build
+export GOMODCACHE = ${GOPATH}/mod
+export GOFLAGS = -modcacherw
+
+%:
+	dh $@ --without "single-binary"
+
+override_dh_auto_configure:
+	printf "%s" "${NAME}" > "./pkg/machinery/gendata/data/name"
+	printf "%s" "${SHA}" > "./pkg/machinery/gendata/data/sha"
+	printf "%s" "${USERNAME}" > "./pkg/machinery/gendata/data/username"
+	printf "%s" "${REGISTRY}" > "./pkg/machinery/gendata/data/registry"
+	printf "%s" "${FACTORY}" > "./pkg/machinery/gendata/data/factory"
+	printf "%s" "${PKGS}" > "./pkg/machinery/gendata/data/pkgs"
+	printf "%s" "${TOOLS}" > "./pkg/machinery/gendata/data/tools"
+	printf "%s" "${TAG}" > "./pkg/machinery/gendata/data/tag"
+	printf "%s" "${ARTIFACTS}" > "./pkg/machinery/gendata/data/artifacts"
+
+override_dh_auto_build:
+	go mod download
+	go mod verify
+	cd "./cmd/talosctl" \
+		&& CGO_ENABLED=0 GOAMD64="${GOAMD64}" go build \
+			-tags "${GO_BUILDTAGS_TALOSCTL}" \
+			-ldflags "-s -w" \
+			-o ../../
+
+	./talosctl completion "bash" > "./talosctl.bash"
+	./talosctl completion "zsh" > "./talosctl.zsh"
+	./talosctl completion "fish" > "./talosctl.fish"
+
+override_dh_auto_install:
+	install -D --mode 755 "./talosctl" "./debian/talosctl/usr/bin/talosctl"
+	install -D --mode 644 \
+		"./talosctl.bash" \
+		"./debian/talosctl/usr/share/bash-completion/completions/talosctl"
+
+	install \
+		-D \
+		--mode 644 \
+		"./talosctl.zsh" \
+		"./debian/talosctl/usr/share/zsh/vendor-completions/_talosctl"
+
+	install \
+		-D \
+		--mode 644 \
+		"./talosctl.fish" \
+		"./debian/talosctl/usr/share/fish/vendor_completions.d/talosctl.fish"
+
+	install -D --mode 644 "./LICENSE" "./debian/talosctl/usr/share/doc/talosctl/LICENSE"
+	install \
+		-D \
+		--mode 644 \
+		"./debian/talosctl.lintian-overrides" \
+		"./debian/talosctl/usr/share/lintian/overrides/talosctl"
+
+override_dh_auto_test:
+	go test -v ./cmd/talosctl/...
+
+override_dh_clean:
+	dh_clean -X"*.orig"
+	rm \
+		--force \
+		"./talosctl" \
+		"./talosctl.bash" \
+		"./talosctl.zsh" \
+		"./talosctl.fish" \
+		*.buildinfo \
+		*.changes \
+		*.deb
+
+override_dh_shlibdeps:

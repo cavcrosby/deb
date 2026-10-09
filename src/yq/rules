@@ -1,0 +1,63 @@
+#!/usr/bin/make -f
+
+export GOPATH = ${CURDIR}/.cache/go
+export GOCACHE = ${GOPATH}/build
+export GOMODCACHE = ${GOPATH}/mod
+export GOFLAGS = -modcacherw
+
+%:
+	dh $@ --without "single-binary"
+
+override_dh_auto_build:
+	go mod download
+	go mod verify
+	CGO_ENABLED=0 go build -ldflags "-s -w"
+	./yq shell-completion "bash" > "./yq.bash"
+	./yq shell-completion "zsh" > "./yq.zsh"
+	./yq shell-completion "fish" > "./yq.fish"
+	./scripts/generate-man-page-md.sh
+	./scripts/generate-man-page.sh
+
+override_dh_auto_install:
+	install -D --mode 755 "./yq" "./debian/yq-go/usr/bin/yq"
+	install -D --mode 644 \
+		"./yq.bash" \
+		"./debian/yq-go/usr/share/bash-completion/completions/yq"
+
+	install \
+		-D \
+		--mode 644 \
+		"./yq.zsh" \
+		"./debian/yq-go/usr/share/zsh/vendor-completions/_yq"
+
+	install \
+		-D \
+		--mode 644 \
+		"./yq.fish" \
+		"./debian/yq-go/usr/share/fish/vendor_completions.d/yq.fish"
+
+	install -D --mode 644 "./LICENSE" "./debian/yq-go/usr/share/doc/yq-go/LICENSE"
+	install -D --mode 644 "./yq.1" "./debian/yq-go/usr/share/man/man1/yq.1"
+	install \
+		-D \
+		--mode 644 \
+		"./debian/yq-go.lintian-overrides" \
+		"./debian/yq-go/usr/share/lintian/overrides/yq-go"
+
+override_dh_auto_test:
+	./scripts/test.sh
+	./scripts/acceptance.sh
+
+override_dh_clean:
+	dh_clean
+	rm \
+		--force \
+		"./yq" \
+		"./yq.bash" \
+		"./yq.zsh" \
+		"./yq.fish" \
+		*.buildinfo \
+		*.changes \
+		*.deb
+
+override_dh_shlibdeps:

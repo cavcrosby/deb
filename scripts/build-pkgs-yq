@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# Builds the packages of the named source.
+
+set -eo pipefail
+
+. "./scripts/util.bash"
+
+# constants
+export CACHE_DIR_PATH="./.cache/yq"
+
+if [ "${VERSION}" ]; then
+    tags="${VERSION}"
+else
+    tags="$(\
+        git ls-remote \
+            --refs \
+            --tags \
+            "https://github.com/mikefarah/yq.git" \
+            "v[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*" \
+            | awk '{ sub("refs/tags/", "", $2); print $2 }' \
+    )"
+fi
+
+# version 4.53.6 is the starting/base version to build
+checkout \
+    "yq" \
+    "v4.53.6" \
+    "https://github.com/mikefarah/yq.git" \
+    "${CACHE_DIR_PATH}"
+
+create_container "yq" "${CACHE_DIR_PATH}"
+setup
+exec_container \
+    "apt-get" \
+    "install" \
+    "--assume-yes" \
+    "--no-install-recommends" \
+    "git"
+
+for tag in ${tags}; do
+    if [ "${VERSION}" ] || is_ge_version "${tag}" "v4.53.6"; then
+        destdir="$(\
+            checkout \
+            "yq" \
+            "${tag}" \
+            "https://github.com/mikefarah/yq.git" \
+            "${CACHE_DIR_PATH}" \
+        )"
+
+        exec_build_pkgs_container "${tag}" "${CACHE_DIR_PATH}"
+    fi
+done
+
+remove_container
+
+exit 0

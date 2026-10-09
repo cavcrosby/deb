@@ -1,0 +1,8 @@
+#
+#
+# .shellcheckrc: directives read by shellcheck(1).
+
+enable=require-variable-braces
+enable=quote-safe-variables
+enable=prefer-double-quotes
+external-sources=true

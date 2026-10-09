@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# Prepares the environment for building packages.
+
+set -eo pipefail
+
+# constants
+PROGNAME="$(basename "$0")"
+readonly PROGNAME
+readonly ROOT_UID=0
+
+if [ "$(id --user)" != "${ROOT_UID}" ]; then
+    printf "%s: %s\n" "${PROGNAME}" "you must run this as root" >&2
+    exit 1
+fi
+
+apt-get update
+apt-get install \
+    --assume-yes \
+    --no-install-recommends \
+    "build-essential" \
+    "devscripts" \
+    "equivs" \
+    "lintian"
+
+mk-build-deps "./debian/control"
