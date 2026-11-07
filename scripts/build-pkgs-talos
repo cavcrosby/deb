@@ -57,7 +57,7 @@ checkout \
     "${CACHE_DIR_PATH}"
 
 create_container "talos" "${CACHE_DIR_PATH}"
-setup
+setup_container
 exec_container \
     "apt-get" \
     "install" \

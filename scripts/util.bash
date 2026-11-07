@@ -50,7 +50,7 @@ checkout() {
     printf "%s\n" "${destdir}"
 }
 
-setup() {
+setup_container() {
     if ! [ "${container_id}" ]; then
         printf \
             "%s: %s\n" \
