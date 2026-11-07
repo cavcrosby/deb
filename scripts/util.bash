@@ -97,7 +97,7 @@ create_container() {
     )"
 
     container_src="${src}"
-    container_setup_path="/build/sources/${src}-${container_setup_version#v}"
+    container_setup_path="/mnt/sources/${src}-${container_setup_version#v}"
     cp \
         "./src/${src}/control" \
         "${cache_dir_path}/${src}-${container_setup_version#v}/debian"
@@ -113,9 +113,9 @@ create_container() {
             --detach \
             --tty \
             --name "debian-${src}" \
-            --mount "type=bind,src=${PWD}/..,dst=/build" \
-            --mount "type=bind,src=${cache_dir_path},dst=/build/sources" \
-            --workdir "/build/sources" \
+            --mount "type=bind,src=${PWD}/..,dst=/mnt" \
+            --mount "type=bind,src=${cache_dir_path},dst=/mnt/sources" \
+            --workdir "/mnt/sources" \
             "debian:unstable" \
         )"
     fi
@@ -151,7 +151,7 @@ exec_build_pkgs_container() {
     fi
 
     docker container exec \
-        --workdir "/build/sources/${container_src}-${version#v}" \
+        --workdir "/mnt/sources/${container_src}-${version#v}" \
         --user "$(id --user)" \
         "${container_id}" \
         "debuild" \
