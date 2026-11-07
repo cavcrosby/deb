@@ -9,6 +9,11 @@ set -eo pipefail
 # constants
 export CACHE_DIR_PATH="./.cache/talos"
 
+if ! [ "$(command -v git)" ]; then
+    printf "%s: %s\n" "${PROGNAME}" "git cannot be found in the PATH!" >&2
+    exit 1
+fi
+
 declare -a patch_versions
 if [ "${VERSION}" ]; then
     patch_versions+=("${VERSION}")
