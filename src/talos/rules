@@ -46,7 +46,9 @@ override_dh_auto_build:
 
 override_dh_auto_install:
 	install -D --mode 755 "./talosctl" "./debian/talosctl/usr/bin/talosctl"
-	install -D --mode 644 \
+	install \
+		-D \
+		--mode 644 \
 		"./talosctl.bash" \
 		"./debian/talosctl/usr/share/bash-completion/completions/talosctl"
 
