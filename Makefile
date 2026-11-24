@@ -6,7 +6,8 @@
 SHELL = /usr/bin/sh
 SOURCES = \
 	yq\
-	talos
+	talos\
+	betterleaks
 
 # targets
 HELP = help

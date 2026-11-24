@@ -1,0 +1,16 @@
+Source: betterleaks
+Maintainer: Conner Crosby <cavcrosby@gmail.com>
+Section: misc
+Build-Depends: debhelper-compat (= 14),
+               golang
+Standards-Version: 4.7.4.1
+Homepage: https://github.com/betterleaks/betterleaks.git
+
+Package: betterleaks
+Architecture: any
+Section: utils
+Description: configurable, fast, and thorough secrets scanner
+ Betterleaks is a configurable, fast, and thorough secrets scanner. It is
+ maintained by the folks who made Gitleaks, including the original author.
+ .
+ This package provides the CLI for secrets scanning and detection.

@@ -1,0 +1,81 @@
+#!/usr/bin/make -f
+
+VERSION = $(shell git describe --tags --abbrev=0)
+VERSION_IMPORT_PATH = $(shell \
+	grep \
+		--extended-regexp \
+		"^LDFLAGS=.+" "./Makefile" \
+		| grep \
+			--only-matching \
+			--extended-regexp \
+			"github\.com/betterleaks/betterleaks/(\w/)*version\.Version" \
+)
+
+export GOPATH = ${CURDIR}/.cache/go
+export GOCACHE = ${GOPATH}/build
+export GOMODCACHE = ${GOPATH}/mod
+export GOFLAGS = -modcacherw
+
+%:
+	dh $@ --without "single-binary"
+
+override_dh_auto_build:
+	go mod download
+	go mod verify
+	CGO_ENABLED=0 go build \
+		-ldflags "-X=${VERSION_IMPORT_PATH}=${VERSION} -s -w"
+
+	./betterleaks completion "bash" > "./betterleaks.bash"
+	./betterleaks completion "zsh" > "./betterleaks.zsh"
+	./betterleaks completion "fish" > "./betterleaks.fish"
+
+override_dh_auto_install:
+	install \
+		-D \
+		--mode 755 \
+		"./betterleaks" \
+		"./debian/betterleaks/usr/bin/betterleaks"
+
+	install -D --mode 644 \
+		"./betterleaks.bash" \
+		"./debian/betterleaks/usr/share/bash-completion/completions/betterleaks"
+
+	install \
+		-D \
+		--mode 644 \
+		"./betterleaks.zsh" \
+		"./debian/betterleaks/usr/share/zsh/vendor-completions/_betterleaks"
+
+	install \
+		-D \
+		--mode 644 \
+		"./betterleaks.fish" \
+		"./debian/betterleaks/usr/share/fish/vendor_completions.d/betterleaks.fish"
+
+	install \
+		-D \
+		--mode 644 \
+		"./LICENSE" \
+		"./debian/betterleaks/usr/share/doc/betterleaks/LICENSE"
+
+	install \
+		-D \
+		--mode 644 \
+		"./debian/betterleaks.lintian-overrides" \
+		"./debian/betterleaks/usr/share/lintian/overrides/betterleaks"
+
+override_dh_clean:
+	dh_clean
+	rm \
+		--force \
+		"./betterleaks" \
+		"./betterleaks.bash" \
+		"./betterleaks.zsh" \
+		"./betterleaks.fish" \
+		*.buildinfo \
+		*.changes \
+		*.deb
+
+override_dh_auto_clean:
+
+override_dh_shlibdeps:
